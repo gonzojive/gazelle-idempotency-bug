@@ -1,4 +1,5 @@
 To reproduce the bug, run
 
+`SOURCE_REPO_PATH=$PWD go test gazelletest/gazelletest_test.go`
 
-`bazel test --test_env SOURCE_REPO_PATH=$PWD //gazelletest:gazelletest_test`
+Running the test with bazel run doesn't work.
