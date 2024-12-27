@@ -1,0 +1,12 @@
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/gonzojive/gazelle-idempotency-bug
+# gazelle:go_grpc_compilers @io_bazel_rules_go//proto:go_grpc
+#
+# This is the problematic directive. When it is added, and gazelle is run
+# repeatedly, the go_library in proto/example disappears the second time gazelle
+# is run.
+#
+# gazelle:map_kind go_proto_library go_proto_library
+# //bazel:go_proto_library.bzl
+gazelle(name = "gazelle")
