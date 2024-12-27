@@ -29,6 +29,8 @@ func TestGazelleLoadsBuildFileConsistently(t *testing.T) {
 		}
 	}
 
+	defer gitResetHard(gitRepoRoot)
+
 	// 2. Define the path to the BUILD.bazel file.
 	buildFilePath := path.Join(gitRepoRoot, "proto", "example", "BUILD.bazel")
 
@@ -100,4 +102,14 @@ func hasGitDiffs(repoDir string) (bool, string, error) {
 
 	// If the output is empty, there are no changes.
 	return len(output) > 0, string(output), nil
+}
+
+// gitResetHard runs `git reset --hard` from [repoDir].
+func gitResetHard(repoDir string) error {
+	// Use "git status --porcelain" to get a concise summary of changes.
+	cmd := exec.Command("git", "reset", "--hard")
+	cmd.Dir = repoDir
+
+	_, err := cmd.Output()
+	return err
 }
