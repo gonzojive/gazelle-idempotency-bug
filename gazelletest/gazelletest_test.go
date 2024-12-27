@@ -1,9 +1,11 @@
 package gazelletest
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,6 +17,16 @@ func TestGazelleLoadsBuildFileConsistently(t *testing.T) {
 	gitRepoRoot, ok := os.LookupEnv("SOURCE_REPO_PATH")
 	if !ok {
 		t.Fatalf("SOURCE_REPO_PATH environment variable not set. This test must be run within a Bazel environment.")
+	}
+
+	{
+		gitDiffsDetected, statusText, err := hasGitDiffs(gitRepoRoot)
+		if err != nil {
+			t.Fatalf("error running git diff in %s: %v", gitRepoRoot, err)
+		}
+		if gitDiffsDetected {
+			t.Fatalf("this test must run in a git directory with no diffs; status:\n%s", statusText)
+		}
 	}
 
 	// 2. Define the path to the BUILD.bazel file.
@@ -31,7 +43,7 @@ func TestGazelleLoadsBuildFileConsistently(t *testing.T) {
 
 	runGazelle := func(context string) {
 		// 4. Run `bazel run //gazelle` for the first time.
-		cmd := exec.Command("bazel", "run", "//gazelle")
+		cmd := exec.Command("bazel", "run", "//:gazelle")
 		cmd.Dir = gitRepoRoot
 		cmd.Stdout = os.Stdout // Pipe output to standard output for visibility
 		cmd.Stderr = os.Stderr // Pipe errors to standard error for visibility
@@ -66,4 +78,26 @@ func unifiedDiff(a, b string) string {
 
 	// Generate the unified diff
 	return dmp.DiffPrettyText(diffs)
+}
+
+// hasGitDiffs checks if there are any uncommitted changes (diffs) in the
+// Git workspace of the given directory.
+func hasGitDiffs(repoDir string) (bool, string, error) {
+	// Use "git status --porcelain" to get a concise summary of changes.
+	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = repoDir
+
+	output, err := cmd.Output()
+	if err != nil {
+		// Check if the error is because the directory is not a Git repository.
+		if exitError, ok := err.(*exec.ExitError); ok {
+			if strings.Contains(string(exitError.Stderr), "not a git repository") {
+				return false, "", fmt.Errorf("not a git repository: %v", err)
+			}
+		}
+		return false, "", fmt.Errorf("failed to execute git status: %v", err)
+	}
+
+	// If the output is empty, there are no changes.
+	return len(output) > 0, string(output), nil
 }
