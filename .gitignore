@@ -1,0 +1,4 @@
+/bazel-bin
+/bazel-gazelle-idempotency-bug
+/bazel-out
+/bazel-testlogs
