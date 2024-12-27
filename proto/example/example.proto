@@ -1,0 +1,16 @@
+syntax="proto3";
+
+// GoGo gRPC Example
+//
+// This example is used to show how to use gRPC and
+// gRPC-Gateway with GoGo Protobuf.
+package example;
+
+option go_package = "github.com/gonzojive/gazelle-idempotency-bug/proto/example";
+
+service UserService {
+    rpc DoSomething(DoSomethingRequest) returns (DoSomethingResponse) { }
+}
+
+message DoSomethingRequest {}
+message DoSomethingResponse {}
